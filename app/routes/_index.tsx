@@ -88,7 +88,8 @@ export default function Index() {
     <Container fluid>
       <Row className="my-3">
         <Col>
-          <h1>CSV Data Dashboard</h1>
+          <h1>Extruder Data Dashboard</h1>
+          <img src="https://www.digitmakers.ca/cdn/shop/files/Digitmakers-png24_550x.png" width={100}/>
         </Col>
       </Row>
       {error && (

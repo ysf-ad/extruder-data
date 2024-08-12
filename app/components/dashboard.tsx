@@ -52,13 +52,18 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
 
   const updateFilteredData = (data: any[], column: string, lower: number, upper: number, excluded: number[], excludeWithin: boolean, first: number, last: number) => {
     const rangeFiltered = data.slice(first, data.length - last);
-    setFilteredData(rangeFiltered.filter((item: any, index: number) => {
+    const moduloFactor = Math.max(1, Math.floor(rangeFiltered.length / 10000));
+    
+    const filtered = rangeFiltered.filter((item: any, index: number) => {
       const value = parseFloat(item[column]);
       const withinThreshold = value >= lower && value <= upper;
       return !isNaN(value) && 
              !excluded.includes(index) && 
-             (excludeWithin ? !withinThreshold : withinThreshold);
-    }));
+             (excludeWithin ? !withinThreshold : withinThreshold) &&
+             index % moduloFactor === 0;  // Modulo sampling
+    });
+    
+    setFilteredData(filtered);
   };
 
   if (error) {

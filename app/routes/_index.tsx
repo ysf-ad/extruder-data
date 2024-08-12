@@ -6,10 +6,12 @@ import { Container, Row, Col, Form, Alert } from 'react-bootstrap';
 import Dashboard from "../components/dashboard";
 import Papa from 'papaparse';
 
+const TARGET_DATA_POINTS = 10000;
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const selectedFile = url.searchParams.get("file") || "";
-  const selectedDataType = url.searchParams.get("dataType") || "xy";
+  const selectedDataType = url.searchParams.get("dataType") || "x";
 
   try {
     const [files] = await storage.bucket().getFiles();
@@ -32,8 +34,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       const [fileContents] = await storage.bucket().file(selectedFile).download();
       const csvText = fileContents.toString('utf-8');
       const result = Papa.parse(csvText, { header: true });
-      csvData = result.data;
-      console.log("Parsed CSV Data:", csvData.slice(0, 5)); // Log first 5 rows
+      const fullData = result.data;
+      
+      // Sample the data to approximately 10,000 points
+      const samplingRate = Math.max(1, Math.floor(fullData.length / TARGET_DATA_POINTS));
+      csvData = fullData.filter((_, index) => index % samplingRate === 0);
+      
+      console.log("Sampled CSV Data:", csvData.slice(0, 5)); // Log first 5 rows
     }
     
     return json({ csvFiles, csvData, selectedFile, selectedDataType });
@@ -47,7 +54,7 @@ export default function Index() {
   const loaderData = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const [selectedFile, setSelectedFile] = useState(loaderData.selectedFile || "");
-  const [selectedDataType, setSelectedDataType] = useState(loaderData.selectedDataType || "xy");
+  const [selectedDataType, setSelectedDataType] = useState(loaderData.selectedDataType || "x");
   const [error, setError] = useState(loaderData.error || "");
   const navigate = useNavigate();
 

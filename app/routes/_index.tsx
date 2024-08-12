@@ -2,7 +2,7 @@ import { json, LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 import { useState, useEffect } from "react";
 import { storage } from "~/services/firebase.server";
-import { Container, Row, Col, Form, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Form, Alert, Button } from 'react-bootstrap';
 import Dashboard from "../components/dashboard";
 import Papa from 'papaparse';
 
@@ -22,7 +22,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           const [metadata] = await file.getMetadata();
           return {
             name: file.name,
-            createdAt: metadata.timeCreated,  // Keep as string for JSON serialization
+            createdAt: metadata.timeCreated,
           };
         })
     );
@@ -30,6 +30,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     csvFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     let csvData: any[] = [];
+    let fullFileContent: string | null = null;
     if (selectedFile) {
       const [fileContents] = await storage.bucket().file(selectedFile).download();
       const csvText = fileContents.toString('utf-8');
@@ -43,7 +44,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       console.log("Sampled CSV Data:", csvData.slice(0, 5)); // Log first 5 rows
     }
     
-    return json({ csvFiles, csvData, selectedFile, selectedDataType });
+    return json({ csvFiles, csvData, selectedFile, selectedDataType, fullFileContent });
   } catch (error) {
     console.error("Error in loader:", error);
     return json({ error: "An error occurred while fetching data" }, { status: 500 });
@@ -62,7 +63,7 @@ export default function Index() {
     console.log("Loader Data:", loaderData);
     console.log("Selected File:", selectedFile);
     console.log("Selected Data Type:", selectedDataType);
-    console.log("CSV Data:", loaderData.csvData?.slice(0, 5)); // Log first 5 rows
+    console.log("CSV Data:", loaderData.csvData?.slice(0, 5));
   }, [loaderData, selectedFile, selectedDataType]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -77,11 +78,25 @@ export default function Index() {
     navigate(`?file=${selectedFile}&dataType=${event.target.value}`);
   };
 
+  const handleDownload = () => {
+    if (selectedFile && loaderData.fullFileContent) {
+      const blob = new Blob([loaderData.fullFileContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', selectedFile);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <Container fluid>
       <Row className="my-3">
         <Col>
-          <h1>CSV Data Dashboard</h1>
+          <h1>Extruder Data Dashboard</h1>
+          <img src="https://www.digitmakers.ca/cdn/shop/files/Digitmakers-png24_550x.png" width={100}/>
         </Col>
       </Row>
       {error && (
@@ -114,6 +129,13 @@ export default function Index() {
               <option value="y">Y</option>
             </Form.Select>
           </Form.Group>
+        </Col>
+      </Row>
+      <Row className="mb-3">
+        <Col>
+          <Button className="btn-dark" onClick={handleDownload} disabled={!selectedFile || !loaderData.fullFileContent}>
+            Download Selected CSV
+          </Button>
         </Col>
       </Row>
       <Row>

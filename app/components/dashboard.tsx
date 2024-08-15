@@ -149,6 +149,7 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
   // Prepare data for Plotly chart
   const xValues = filteredData.map((item, index) => index + 1);
   const yValues = filteredData.map(item => parseFloat(item[actualColumnName]));
+  const timeValues = filteredData.map(item => item.MCGS_TIME);
 
   const plotlyData: Data[] = [
     {
@@ -158,7 +159,8 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
       mode: 'lines+markers',
       name: 'Data',
       showlegend: true,
-      hoverinfo: 'all',
+      hoverinfo: 'text',
+      hovertext: yValues.map((y, i) => `Time: ${timeValues[i]}<br>Value: ${y.toFixed(4)}`),
       line: { color: 'blue', width: 2 },
       marker: { color: 'blue', size: 8, symbol: 'circle' }
     },
@@ -217,7 +219,7 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
       line: { color: 'green', width: 2, dash: 'dot' }
     }
   ];
-
+  
   const plotlyLayout: Partial<Layout> = {
     title: 'Control Chart',
     xaxis: { title: 'Sample' },
@@ -225,7 +227,7 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
     hovermode: 'closest',
     dragmode: 'select'
   };
-
+  
   const handlePlotSelect = (eventData: any) => {
     if (eventData && eventData.points) {
       const newExcludedPoints = eventData.points.map((point: any) => point.pointIndex);

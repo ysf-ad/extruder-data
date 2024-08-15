@@ -1,6 +1,6 @@
 import { Data, Layout } from 'plotly.js';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { Row, Col, Card, Table, Form, Alert } from 'react-bootstrap';
+import { Row, Col, Card, Table, Form, Alert, Pagination  } from 'react-bootstrap';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 // Dynamically import Plotly
@@ -26,6 +26,11 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
   const [excludeFirst, setExcludeFirst] = useState(300);
   const [excludeLast, setExcludeLast] = useState(300);
   const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -99,6 +104,47 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
   const handleExcludeLastChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setExcludeLast(parseInt(event.target.value));
   };
+
+  const getPageItems = () => {
+    const items = [];
+    const maxPagesToShow = 5; // Adjust this number to show more or fewer page numbers
+
+    items.push(
+      <Pagination.First key="first" onClick={() => handlePageChange(1)} disabled={currentPage === 1} />,
+      <Pagination.Prev key="prev" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+    );
+
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    if (startPage > 1) {
+      items.push(<Pagination.Ellipsis key="ellipsis-start" />);
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(
+        <Pagination.Item key={page} active={page === currentPage} onClick={() => handlePageChange(page)}>
+          {page}
+        </Pagination.Item>
+      );
+    }
+
+    if (endPage < totalPages) {
+      items.push(<Pagination.Ellipsis key="ellipsis-end" />);
+    }
+
+    items.push(
+      <Pagination.Next key="next" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />,
+      <Pagination.Last key="last" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+    );
+
+    return items;
+  };
+
 
   // Prepare data for Plotly chart
   const xValues = filteredData.map((item, index) => index + 1);
@@ -356,15 +402,7 @@ export default function Dashboard({ data, dataType }: DashboardProps) {
                   ))}
                 </tbody>
               </Table>
-              <div>
-                <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-                  Previous
-                </button>
-                <span> Page {currentPage} </span>
-                <button onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage * itemsPerPage >= filteredData.length}>
-                  Next
-                </button>
-              </div>
+              <Pagination>{getPageItems()}</Pagination>
             </Card.Body>
           </Card>
         </Col>

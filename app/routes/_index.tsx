@@ -33,8 +33,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     let fullFileContent: string | null = null;
     if (selectedFile) {
       const [fileContents] = await storage.bucket().file(selectedFile).download();
-      const csvText = fileContents.toString('utf-8');
-      const result = Papa.parse(csvText, { header: true });
+      fullFileContent = fileContents.toString('utf-8');
+      const result = Papa.parse(fullFileContent, { header: true });
       const fullData = result.data;
       
       // Sample the data to approximately 10,000 points
@@ -79,6 +79,9 @@ export default function Index() {
   };
 
   const handleDownload = () => {
+    console.log(selectedFile)
+    console.log(loaderData.fullFileContent)
+    console.log(loaderData)
     if (selectedFile && loaderData.fullFileContent) {
       const blob = new Blob([loaderData.fullFileContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -133,7 +136,9 @@ export default function Index() {
       </Row>
       <Row className="mb-3">
         <Col>
-          <Button className="btn-dark" onClick={handleDownload} disabled={!selectedFile || !loaderData.fullFileContent}>
+          <Button className="btn-dark" onClick={handleDownload} 
+          // disabled={!selectedFile || !loaderData.fullFileContent}
+          >
             Download Selected CSV
           </Button>
         </Col>

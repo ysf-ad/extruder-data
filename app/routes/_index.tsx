@@ -55,8 +55,10 @@ export default function Index() {
   const loaderData = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const [selectedFile, setSelectedFile] = useState(loaderData.selectedFile || "");
-  const [selectedDataType, setSelectedDataType] = useState(loaderData.selectedDataType || "x");
+  const [selectedDataType, setSelectedDataType] = useState(loaderData.selectedDataType || "xy");
   const [error, setError] = useState(loaderData.error || "");
+  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,6 +95,42 @@ export default function Index() {
       document.body.removeChild(link);
     }
   };
+
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(event.target.value);
+  };
+
+  const handleLogin = () => {
+    if (password === "Canada@1231") {
+      setIsAuthenticated(true);
+    } else {
+      setError("Invalid password");
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <Container fluid>
+        <Row className="my-3">
+          <Col>
+            <h1>Login</h1>
+            <Form.Group controlId="password">
+              <Form.Label>Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={password}
+                onChange={handlePasswordChange}
+              />
+            </Form.Group>
+            <Button className="mt-3" onClick={handleLogin}>Login</Button>
+            {error && (
+              <Alert variant="danger" className="mt-3">{error}</Alert>
+            )}
+          </Col>
+        </Row>
+      </Container>
+    );
+  }
 
   return (
     <Container fluid>
@@ -136,7 +174,7 @@ export default function Index() {
       </Row>
       <Row className="mb-3">
         <Col>
-          <Button className="btn-dark" onClick={handleDownload} 
+          <Button className="btn-dark" onClick={handleDownload}
           // disabled={!selectedFile || !loaderData.fullFileContent}
           >
             Download Selected CSV
